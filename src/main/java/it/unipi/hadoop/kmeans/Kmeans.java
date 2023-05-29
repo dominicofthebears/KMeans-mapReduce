@@ -4,6 +4,7 @@ import java.util.*;
 
 import it.unipi.hadoop.models.Centroid;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.*;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
@@ -18,11 +19,11 @@ import org.apache.hadoop.yarn.server.nodemanager.Context;
 
 public class Kmeans {
 
-    private Centroid[] centroids;
+    private static Centroid[] centroids;
 
     //ask for the stopping condition
-    private boolean stopCondition(){
-
+    private static boolean stopCondition(){
+            return false;
     }
 
     public static int countLines(String filename) throws IOException {
@@ -80,20 +81,50 @@ public class Kmeans {
 
         conf.set("initializedCentroids", centroids);
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-        Job job = Job.getInstance(conf, "word count");
-        job.setJarByClass(Kmeans.class);
-        job.setMapperClass(KMeansMapper.class);
-        //job.setCombinerClass(IntSumReducer.class);
-        job.setReducerClass(KMeansReducer.class);
-        job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(IntWritable.class);
-        job.setNumReduceTasks(k); //numero centroidi
-        for (int i = 0; i < otherArgs.length - 1; ++i) {
-            FileInputFormat.addInputPath(job, new Path(otherArgs[i]));
+
+        while(!stopCondition()) {
+            Job job = Job.getInstance(conf, "KMeans");
+            job.setJarByClass(Kmeans.class);
+            job.setMapperClass(KMeansMapper.class);
+            //job.setCombinerClass(IntSumReducer.class);
+            job.setReducerClass(KMeansReducer.class);
+            job.setOutputKeyClass(Text.class);
+            job.setOutputValueClass(IntWritable.class);
+            job.setNumReduceTasks(k); //numero centroidi
+            for (int i = 0; i < otherArgs.length - 1; ++i) {
+                FileInputFormat.addInputPath(job, new Path(otherArgs[i]));
+            }
+            //FileOutputFormat.setOutputPath(job, new Path(otherArgs[otherArgs.length - 1])); //qui salva il result del reducer?
+            if(job.waitForCompletion(true)) {
+                if (!stopCondition()) {
+
+                    Path outputPath = FileOutputFormat.getOutputPath(job);
+                    FileSystem fs = outputPath.getFileSystem(conf);
+
+                    // read output file
+                    FileStatus[] fileStatuses = fs.listStatus(outputPath);
+                    for (FileStatus status : fileStatuses) {
+                        Path filePath = status.getPath();
+
+
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(filePath)));
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            //gestire linea output
+                            System.out.println(line);
+                        }
+                        reader.close();
+                    }
+                } else {
+                    FileOutputFormat.setOutputPath(job, new Path(otherArgs[otherArgs.length - 1]));
+                }
+            }
+            else{
+                    //job failure to handle
+            }
+            //System.exit(job.waitForCompletion(true) ? 0 : 1);
         }
-        FileOutputFormat.setOutputPath(job,
-                new Path(otherArgs[otherArgs.length - 1]));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        System.exit(0);
     }
 }
 
