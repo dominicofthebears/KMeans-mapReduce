@@ -38,6 +38,7 @@ public class DataPoint implements Writable {
         return d;
     }
 
+    
     public DataPoint cumulatePoints(DataPoint p){
         if(this.coordinates == null){
             this.coordinates = new LinkedList<>(Collections.nCopies(p.getCoordinates().size(), 0.0f));;
