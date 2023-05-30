@@ -5,10 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7a4a29d5-0abd-4050-813e-e1b05f74b62a" name="Changes" comment="initial commit #2">
-      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unipi/hadoop/models/DataPoint.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unipi/hadoop/models/DataPoint.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,7 +63,7 @@
       <workItem from="1685293086025" duration="224000" />
       <workItem from="1685347633930" duration="7295000" />
       <workItem from="1685433842859" duration="609000" />
-      <workItem from="1685453842584" duration="2268000" />
+      <workItem from="1685453842584" duration="2569000" />
     </task>
     <task id="LOCAL-00001" summary="initial commit #2">
       <created>1685293155083</created>
