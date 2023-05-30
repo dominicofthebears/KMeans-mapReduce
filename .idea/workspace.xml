@@ -4,8 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7a4a29d5-0abd-4050-813e-e1b05f74b62a" name="Changes" comment="initial commit #2">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="7a4a29d5-0abd-4050-813e-e1b05f74b62a" name="Changes" comment="Kmeans.java update cycle reduce map">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unipi/hadoop/kmeans/KMeansMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unipi/hadoop/kmeans/KMeansMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unipi/hadoop/kmeans/Kmeans.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unipi/hadoop/kmeans/Kmeans.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/it/unipi/hadoop/models/DataPoint.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unipi/hadoop/models/DataPoint.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -37,14 +40,15 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.project.maven.repository.indices&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "last_opened_file_path": "C:/Users/matte/CloudLab/wordcount_try",
+    "settings.editor.selected.configurable": "reference.settings.project.maven.repository.indices"
   }
-}</component>
+}]]></component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -65,12 +69,14 @@
       <workItem from="1685433842859" duration="609000" />
       <workItem from="1685453842584" duration="2569000" />
     </task>
-    <task id="LOCAL-00001" summary="initial commit #2">
-      <created>1685293155083</created>
+
+    <task id="LOCAL-00001" summary="Kmeans.java update cycle reduce map">
+      <created>1685351865653</created>
       <option name="number" value="00001" />
       <option name="presentableId" value="LOCAL-00001" />
       <option name="project" value="LOCAL" />
-      <updated>1685293155083</updated>
+      <updated>1685351865653</updated>
+
     </task>
     <option name="localTasksCounter" value="2" />
     <servers />
@@ -94,7 +100,7 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="initial commit #2" />
-    <option name="LAST_COMMIT_MESSAGE" value="initial commit #2" />
+    <MESSAGE value="Kmeans.java update cycle reduce map" />
+    <option name="LAST_COMMIT_MESSAGE" value="Kmeans.java update cycle reduce map" />
   </component>
 </project>

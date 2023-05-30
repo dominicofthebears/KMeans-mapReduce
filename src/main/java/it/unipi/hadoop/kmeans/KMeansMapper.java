@@ -24,10 +24,13 @@ public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, DataPo
         int k = Integer.parseInt(context.getConfiguration().get("k"));
         centroids = new Centroid[k];
         Configuration conf = context.getConfiguration();
-        String parsedCentroids = conf.get("initializedCentroids");
+        //String parsedCentroids = conf.get("initializedCentroids");
+        //System.out.println("centroids:"+parsedCentroids);
         int i = 0;
-        for (String s : parsedCentroids.split("\n")){
-            centroids[i] = (Centroid) Centroid.parseString(s);
+        //for (String s : parsedCentroids.split("\n")){
+        for(int j=0;j<k;j++){
+            String s = conf.get("centroid"+j);
+            centroids[i] = (Centroid) Centroid.parseString(s,true);
             centroids[i].setLabel(i);
             i++;
         }
@@ -39,6 +42,7 @@ public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, DataPo
             int closestLabel = 0;
 
             DataPoint dataPoint = DataPoint.parseString(String.valueOf(value));
+
 
             for (int i=0; i<centroids.length; i++){
                 if(dataPoint.squaredNorm2Distance(centroids[i])<minDistance){
