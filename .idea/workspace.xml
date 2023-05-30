@@ -64,13 +64,19 @@
       <workItem from="1684675873132" duration="10285000" />
       <workItem from="1685027189873" duration="2671000" />
       <workItem from="1685030159048" duration="359000" />
+      <workItem from="1685293086025" duration="224000" />
+      <workItem from="1685347633930" duration="7295000" />
+      <workItem from="1685433842859" duration="609000" />
+      <workItem from="1685453842584" duration="2569000" />
     </task>
+
     <task id="LOCAL-00001" summary="Kmeans.java update cycle reduce map">
       <created>1685351865653</created>
       <option name="number" value="00001" />
       <option name="presentableId" value="LOCAL-00001" />
       <option name="project" value="LOCAL" />
       <updated>1685351865653</updated>
+
     </task>
     <option name="localTasksCounter" value="2" />
     <servers />
