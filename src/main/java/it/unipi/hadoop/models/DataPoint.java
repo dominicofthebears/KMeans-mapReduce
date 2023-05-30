@@ -23,9 +23,19 @@ public class DataPoint{
         return sum; //not returning the square root since we are looking for the squared norm2
     }
 
-    public static DataPoint parseString(String s){
-        DataPoint d = new DataPoint();
+    public static DataPoint parseString(String s, Boolean centroid){
+
+        DataPoint d;
+        if(centroid){
+                d=new Centroid();
+        }
+        else{
+                d = new DataPoint();
+        }
+
+        d.coordinates=new LinkedList<>();
         for (String s2 : s.split(",")){
+            System.out.println("split:"+s2);
             d.coordinates.add(Float.parseFloat(s2));
         }
         return d;
