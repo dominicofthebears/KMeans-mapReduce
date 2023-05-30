@@ -37,7 +37,6 @@ public class DataPoint implements Writable {
         }
         return d;
     }
-
     
     public DataPoint cumulatePoints(DataPoint p){
         if(this.coordinates == null){
