@@ -2,12 +2,11 @@ package it.unipi.hadoop.kmeans;
 import java.io.*;
 import java.util.*;
 
-import it.unipi.hadoop.models.Centroid;
+import it.unipi.hadoop.models.DataPoint;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -15,20 +14,27 @@ import org.apache.hadoop.util.GenericOptionsParser;
 
 public class Kmeans {
 
-    private static Centroid[] centroids;
+    private static DataPoint[] centroids;
 
     //ask for the stopping condition
-    private static boolean stopCondition(Centroid[] oldCentroids, Centroid[] newCentroids, int nIterations, int maxIterations, float threshold){
+    private static boolean stopCondition(DataPoint[] oldCentroids, DataPoint[] newCentroids, int nIterations, int maxIterations, float threshold){
+        System.out.println("start stopCondition function");
         float totDistance=0;
         for(int i=0; i<newCentroids.length; i++){
             totDistance += newCentroids[i].squaredNorm2Distance(oldCentroids[i]);
         }
-        if(totDistance<=threshold) //if the total distance is lower than the threshold the algorithm can end
+        if(totDistance<=threshold) { //if the total distance is lower than the threshold the algorithm can end
+            System.out.println("end stopCondition function");
             return true;
-        else if(nIterations>=maxIterations) // if the distance is higher than the threshold the algorithm stops anyway if it runs for at least maxIterations iterations
+        }
+        else if(nIterations>=maxIterations) { // if the distance is higher than the threshold the algorithm stops anyway if it runs for at least maxIterations iterations
+            System.out.println("end stopCondition function");
             return true;
-        else
+        }
+        else {
+            System.out.println("end stopCondition function");
             return false;
+        }
     }
 
     public static int countLines(String filename) throws IOException {
@@ -63,7 +69,7 @@ public class Kmeans {
         int i = 0;
         String line;
 
-        centroids= new Centroid[k]; //initialize centroid vector
+        centroids= new DataPoint[k]; //initialize centroid vector
 
         //System.out.println("indice:"+indexes[0]);
 
@@ -72,7 +78,7 @@ public class Kmeans {
             //System.out.println("line"+j+": "+line);
             //System.out.println("indice"+i+": "+indexes[i]);
             if(j == indexes[i]){
-                centroids[i] = Centroid.parseString(line);  //DOMENICO look
+                centroids[i] = DataPoint.parseString(line);  //DOMENICO look
                 if(i==0){
                     //indexes[i+1] = random.nextInt(indexes[0], numLines-k+i);
                     indexes[i+1] = random.nextInt((numLines - k + i) - indexes[0] + 1) + indexes[0]+1;  //il +1 nella parentesi è per prendere il secondo estremo compreso, e il +1 qui fuori per prendere il primo estremo NON compreso, altrimenti può succedere di estrarre un valore uguale a quello estratto al passaggio precedente
@@ -90,11 +96,11 @@ public class Kmeans {
         }
     }
 
-    private static Centroid[] readCentroids(Configuration conf, String outputFile, int k) throws IOException {
+    private static DataPoint[] readCentroids(Configuration conf, String outputFile, int k) throws IOException {
         Path outputPath = new Path(outputFile);
         FileSystem fs = outputPath.getFileSystem(conf);
 
-        Centroid[] newCentroids=new Centroid[k];
+        DataPoint[] newCentroids=new DataPoint[k];
 
         // read output file
         FileStatus[] fileStatuses = fs.listStatus(outputPath);
@@ -104,25 +110,32 @@ public class Kmeans {
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(filePath)));
             String line;
+            int i=0;
             while ((line = reader.readLine()) != null) {
                 //gestire linea output
                 //each line should be a centroid
-                String[] splitOfLine=line.split("\t");
-                int centroidId=Integer.parseInt(splitOfLine[0]);
-                String[] coordinates=splitOfLine[1].split(",");
+                //String[] splitOfLine=line.split("\t");
+                //int centroidId=Integer.parseInt(line);
+                String[] coordinates=line.split(",");
                 LinkedList<Float> coordinatesCentroid=new LinkedList<>();
                 for(String coordinate :coordinates){
                     coordinatesCentroid.add(Float.parseFloat(coordinate));
                 }
-                Centroid centroid=new Centroid();
+                DataPoint centroid=new DataPoint();
                 centroid.setCoordinates(coordinatesCentroid);
-                newCentroids[centroidId]=centroid;
+                newCentroids[i]=centroid;
+                i++;
             }
-            conf.set("initializedCentroids", Arrays.toString(newCentroids));
+            //conf.set("initializedCentroids", Arrays.toString(newCentroids));
+            int c=0;
+            for(DataPoint centroid: newCentroids){
+                conf.set("centroid"+c,centroid.toString());
+                c++;
+            }
             reader.close();
-            if (fs.exists(outputPath)) { //in this way it will avoid the Output directory already exists problem, deleting each time the outputPath before rewrite to it
-                fs.delete(outputPath, true);
-            }
+            //if (fs.exists(outputPath)) { //in this way it will avoid the Output directory already exists problem, deleting each time the outputPath before rewrite to it
+                //fs.delete(outputPath, true);
+            //}
         }
         return newCentroids;
     }
@@ -138,7 +151,7 @@ public class Kmeans {
         Kmeans.initializeCentroids(k,path_dataset);
 
         int c=0;
-        for(Centroid centroid: centroids){
+        for(DataPoint centroid: centroids){
                 conf.set("centroid"+c,centroid.toString());
                 c++;
         }
@@ -148,21 +161,24 @@ public class Kmeans {
         int i=0;
 
         while(stop==0) {
+            System.out.println("cycle number:"+i);
 
             Job job = Job.getInstance(conf, "KMeans");
             job.setJarByClass(Kmeans.class);
             job.setMapperClass(KMeansMapper.class);
-            //job.setCombinerClass(IntSumReducer.class);
+            job.setCombinerClass(KMeansCombiner.class);
             job.setReducerClass(KMeansReducer.class);
-            job.setOutputKeyClass(Text.class);
-            job.setOutputValueClass(IntWritable.class);
+            //job.setMapOutputKeyClass(IntWritable.class);
+            //job.setMapOutputValueClass(DataPoint.class);
+            job.setOutputKeyClass(IntWritable.class);
+            job.setOutputValueClass(DataPoint.class);
             job.setNumReduceTasks(k); //numero centroidi
             FileInputFormat.addInputPath(job, new Path(otherArgs[1]));
             FileOutputFormat.setOutputPath(job, new Path(otherArgs[otherArgs.length - 1])); //qui salva il result del reducer?
             if(job.waitForCompletion(true)) {
 
 
-                Centroid[] newCentroids = readCentroids(conf, otherArgs[otherArgs.length - 1], k);
+                DataPoint[] newCentroids = readCentroids(conf, otherArgs[otherArgs.length - 1], k);
                 if (!stopCondition(centroids,newCentroids,i,10, 30)) {
                         stop=0;
                 } else {
