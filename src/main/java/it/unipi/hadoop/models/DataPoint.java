@@ -12,7 +12,9 @@ import java.util.LinkedList;
 public class DataPoint implements Writable {
 
     protected LinkedList<Float> coordinates;
-
+    public DataPoint(){
+        coordinates = new LinkedList<>();
+    }
     public LinkedList<Float> getCoordinates() {
         return coordinates;
     }
@@ -30,38 +32,19 @@ public class DataPoint implements Writable {
         return sum; //not returning the square root since we are looking for the squared norm2
     }
 
-    public static DataPoint parseString(String s, Boolean centroid){
+    public static DataPoint parseString(String s){
+        DataPoint d = new DataPoint();
 
-        DataPoint d;
-        if(centroid){
-                d=new Centroid();
-        }
-        else{
-                d = new DataPoint();
-        }
-
-        d.coordinates=new LinkedList<>();
         for (String s2 : s.split(",")){
-            System.out.println("split:"+s2);
             d.coordinates.add(Float.parseFloat(s2));
         }
         return d;
     }
 
-    public DataPoint cumulatePoints(DataPoint p){
-        if(this.coordinates == null){
-            this.coordinates = new LinkedList<>(Collections.nCopies(p.getCoordinates().size(), 0.0f));;
-        }
-        for (int i=0; i<p.getCoordinates().size(); i++){
-            this.coordinates.set(i, this.coordinates.get(i) + p.coordinates.get(i));
-        }
-        return this;
-    }
-
     @Override
     public void write(DataOutput out) throws IOException {
-        for(int i = 0; i < coordinates.size(); i++) {
-            out.writeFloat(this.coordinates.get(i));
+        for (Float coordinate : coordinates) {
+            out.writeFloat(coordinate);
         }
     }
 
