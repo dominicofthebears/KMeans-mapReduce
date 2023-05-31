@@ -40,6 +40,7 @@ public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, DataPo
             float minDistance = Float.POSITIVE_INFINITY;
             int closestLabel = 0;
 
+
             DataPoint dataPoint = DataPoint.parseString(String.valueOf(value));
             for (int i=0; i<centroids.length; i++){
                 if(dataPoint.squaredNorm2Distance(centroids[i])<minDistance){
