@@ -41,7 +41,7 @@ public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, DataPo
             float minDistance = Float.POSITIVE_INFINITY;
             int closestLabel = 0;
 
-            DataPoint dataPoint = DataPoint.parseString(String.valueOf(value));
+            DataPoint dataPoint = DataPoint.parseString(String.valueOf(value), false);
 
 
             for (int i=0; i<centroids.length; i++){

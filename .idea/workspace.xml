@@ -34,6 +34,13 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="useMavenConfig" value="true" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
   <component name="ProjectId" id="2Pp57wd1yc7hsUj7flwlV2Xch0e" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
@@ -45,7 +52,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "C:/Users/matte/CloudLab/wordcount_try",
+    "last_opened_file_path": "C:/Users/meoli/KMeans-mapReduce",
     "settings.editor.selected.configurable": "reference.settings.project.maven.repository.indices"
   }
 }]]></component>
@@ -69,14 +76,12 @@
       <workItem from="1685433842859" duration="609000" />
       <workItem from="1685453842584" duration="2569000" />
     </task>
-
     <task id="LOCAL-00001" summary="Kmeans.java update cycle reduce map">
       <created>1685351865653</created>
       <option name="number" value="00001" />
       <option name="presentableId" value="LOCAL-00001" />
       <option name="project" value="LOCAL" />
       <updated>1685351865653</updated>
-
     </task>
     <option name="localTasksCounter" value="2" />
     <servers />

@@ -18,13 +18,23 @@ public class Kmeans {
     private static Centroid[] centroids;
 
     //ask for the stopping condition
-    private static boolean stopCondition(Centroid[] centroids, Centroid[] newCentroids,int k, int threshold){
-            if(k<threshold){
-                    return true;
+    private static boolean stopCondition(Centroid[] oldCentroids, Centroid[] newCentroids, int nIterations, int maxIterations, float threshold){
+        float totDistance=0;
+        for(int i=0; i<newCentroids.length; i++){
+            float coordinatesDistance=0;
+            LinkedList<Float> oldCoordinates = oldCentroids[i].getCoordinates(); //coordinates of the old i-th centroid
+            LinkedList<Float> newCoordinates = newCentroids[i].getCoordinates(); //coordinates of the new i-th centroid
+            for(int j=0; j<newCoordinates.size(); j++){ //for every couple of centroids (old and new) I calculate the distance, in order to know the variation of the centroid
+                coordinatesDistance += Math.pow(newCoordinates.get(j) - oldCoordinates.get(j), 2);
             }
-            else{
-                    return false;
-            }
+            totDistance += Math.sqrt(coordinatesDistance); //the distance of i-th centroid is added to the total sum
+        }
+        if(totDistance<=threshold) //if the total distance is lower than the threshold the algorithm can end
+            return true;
+        else if(nIterations>=maxIterations) // if the distance is higher than the threshold the algorithm stops anyway if it runs for at least maxIterations iterations
+            return true;
+        else
+            return false;
     }
 
     public static int countLines(String filename) throws IOException {
@@ -159,7 +169,7 @@ public class Kmeans {
 
 
                 Centroid[] newCentroids = readCentroids(conf, otherArgs[otherArgs.length - 1], k);
-                if (!stopCondition(centroids,newCentroids,i,10)) {
+                if (!stopCondition(centroids,newCentroids,i,10, 30)) {
                         stop=0;
                 } else {
                     stop=1;
