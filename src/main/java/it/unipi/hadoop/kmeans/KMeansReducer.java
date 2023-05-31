@@ -12,20 +12,18 @@ public class KMeansReducer extends Reducer<IntWritable, Centroid, IntWritable, D
 
     public void reduce(IntWritable key, Iterable<Centroid> values, Context context) throws IOException, InterruptedException {
         int totalPoints = 0;
-        float totalError = 0;
-        DataPoint finalResult = new DataPoint();
-        float sum = 0;
+        Centroid finalResult = new Centroid();
 
         while (values.iterator().hasNext()) {
             Centroid c = values.iterator().next();
-            totalError += c.getCumulatedError();
             totalPoints += c.getPointsCounter();
             finalResult.cumulatePoints(c);
         }
-        //finalResult.setCumulatedError(totalError);
+
         for (int j = 0; j < finalResult.getCoordinates().size(); j++) {
             finalResult.getCoordinates().set(j, finalResult.getCoordinates().get(j) / totalPoints);
         }
+
         context.write(key, finalResult);
     }
 }

@@ -30,8 +30,7 @@ public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, DataPo
         //for (String s : parsedCentroids.split("\n")){
         for(int j=0;j<k;j++){
             String s = conf.get("centroid"+j);
-            centroids[i] = (Centroid) Centroid.parseString(s,true);
-            centroids[i].setLabel(i);
+            centroids[i] = Centroid.parseString(s);
             i++;
         }
     }
@@ -42,8 +41,6 @@ public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, DataPo
             int closestLabel = 0;
 
             DataPoint dataPoint = DataPoint.parseString(String.valueOf(value));
-
-
             for (int i=0; i<centroids.length; i++){
                 if(dataPoint.squaredNorm2Distance(centroids[i])<minDistance){
                     minDistance = (float) dataPoint.squaredNorm2Distance(centroids[i]);

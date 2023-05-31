@@ -68,7 +68,7 @@ public class Kmeans {
             //System.out.println("line"+j+": "+line);
             //System.out.println("indice"+i+": "+indexes[i]);
             if(j == indexes[i]){
-                centroids[i] = (Centroid) Centroid.parseString(line,true);  //DOMENICO look
+                centroids[i] = Centroid.parseString(line);  //DOMENICO look
                 if(i==0){
                     //indexes[i+1] = random.nextInt(indexes[0], numLines-k+i);
                     indexes[i+1] = random.nextInt((numLines - k + i) - indexes[0] + 1) + indexes[0]+1;  //il +1 nella parentesi è per prendere il secondo estremo compreso, e il +1 qui fuori per prendere il primo estremo NON compreso, altrimenti può succedere di estrarre un valore uguale a quello estratto al passaggio precedente

@@ -6,23 +6,18 @@ import org.apache.hadoop.io.Writable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 public class Centroid extends DataPoint implements Writable {
 
     private int pointsCounter;
-    private float cumulatedError;
-    private int label;
-    private LinkedList<Float> cumulatedPointsCoordinates;
 
-    public void Centroid(){
+    public Centroid(){
         this.pointsCounter = 0;
-        this.cumulatedError = 0;
         this.coordinates = new LinkedList<>();
-        this.cumulatedPointsCoordinates = new LinkedList<>();
     }
-
 
     public int getPointsCounter() {
         return pointsCounter;
@@ -32,42 +27,16 @@ public class Centroid extends DataPoint implements Writable {
         this.pointsCounter = pointsCounter;
     }
 
-    public float getCumulatedError() {
-        return cumulatedError;
-    }
-
-    public void setCumulatedError(float cumulatedError) {
-        this.cumulatedError = cumulatedError;
-    }
-
-    public int getLabel() {
-        return label;
-    }
-
-    public void setLabel(int label) {
-        this.label = label;
-    }
-
-
-
     @Override
     public void write(DataOutput out) throws IOException {
+        super.write(out);
         out.writeInt(this.pointsCounter);
-        out.writeInt(this.label);
-        out.writeFloat(this.cumulatedError);
-        for(int i = 0; i < coordinates.size(); i++) {
-            out.writeFloat(this.coordinates.get(i));
-        }
     }
 
     @Override
     public void readFields(DataInput in) throws IOException {
+        super.readFields(in);
         this.pointsCounter = in.readInt();
-        this.label = in.readInt();
-        this.cumulatedError = in.readFloat();
-        for(int i = 0; i < coordinates.size(); i++) {
-            this.coordinates.set(i, in.readFloat());
-        }
     }
 
     @Override
@@ -82,11 +51,23 @@ public class Centroid extends DataPoint implements Writable {
         return centroid.toString();
     }
 
-    public List<Float> getCumulatedPointsCoordinates() {
-        return cumulatedPointsCoordinates;
+    public static Centroid parseString(String s){
+        Centroid c = new Centroid();
+        for (String s2 : s.split(",")){
+            c.coordinates.add(Float.parseFloat(s2));
+        }
+        return c;
     }
 
-    public void setCumulatedPointsCoordinates(List<Float> cumulatedPointsCoordinates) {
-        this.cumulatedPointsCoordinates = (LinkedList<Float>) cumulatedPointsCoordinates;
+    public Centroid cumulatePoints(DataPoint p){
+        if(this.coordinates == null){
+            this.coordinates = new LinkedList<>(Collections.nCopies(p.getCoordinates().size(), 0.0f));;
+        }
+
+        for (int i=0; i<p.getCoordinates().size(); i++){
+            this.coordinates.set(i, this.coordinates.get(i) + p.coordinates.get(i));
+        }
+        return this;
     }
+
 }
