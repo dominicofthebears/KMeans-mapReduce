@@ -21,13 +21,7 @@ public class Kmeans {
     private static boolean stopCondition(Centroid[] oldCentroids, Centroid[] newCentroids, int nIterations, int maxIterations, float threshold){
         float totDistance=0;
         for(int i=0; i<newCentroids.length; i++){
-            float coordinatesDistance=0;
-            LinkedList<Float> oldCoordinates = oldCentroids[i].getCoordinates(); //coordinates of the old i-th centroid
-            LinkedList<Float> newCoordinates = newCentroids[i].getCoordinates(); //coordinates of the new i-th centroid
-            for(int j=0; j<newCoordinates.size(); j++){ //for every couple of centroids (old and new) I calculate the distance, in order to know the variation of the centroid
-                coordinatesDistance += Math.pow(newCoordinates.get(j) - oldCoordinates.get(j), 2);
-            }
-            totDistance += Math.sqrt(coordinatesDistance); //the distance of i-th centroid is added to the total sum
+            totDistance += newCentroids[i].squaredNorm2Distance(oldCentroids[i]);
         }
         if(totDistance<=threshold) //if the total distance is lower than the threshold the algorithm can end
             return true;
