@@ -18,13 +18,17 @@ public class Kmeans {
     private static Centroid[] centroids;
 
     //ask for the stopping condition
-    private static boolean stopCondition(Centroid[] centroids, Centroid[] newCentroids,int k, int threshold){
-            if(k<threshold){
-                    return true;
-            }
-            else{
-                    return false;
-            }
+    private static boolean stopCondition(Centroid[] oldCentroids, Centroid[] newCentroids, int nIterations, int maxIterations, float threshold){
+        float totDistance=0;
+        for(int i=0; i<newCentroids.length; i++){
+            totDistance += newCentroids[i].squaredNorm2Distance(oldCentroids[i]);
+        }
+        if(totDistance<=threshold) //if the total distance is lower than the threshold the algorithm can end
+            return true;
+        else if(nIterations>=maxIterations) // if the distance is higher than the threshold the algorithm stops anyway if it runs for at least maxIterations iterations
+            return true;
+        else
+            return false;
     }
 
     public static int countLines(String filename) throws IOException {
@@ -159,7 +163,7 @@ public class Kmeans {
 
 
                 Centroid[] newCentroids = readCentroids(conf, otherArgs[otherArgs.length - 1], k);
-                if (!stopCondition(centroids,newCentroids,i,10)) {
+                if (!stopCondition(centroids,newCentroids,i,10, 30)) {
                         stop=0;
                 } else {
                     stop=1;
