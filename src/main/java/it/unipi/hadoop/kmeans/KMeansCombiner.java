@@ -1,16 +1,15 @@
 package it.unipi.hadoop.kmeans;
 
-import it.unipi.hadoop.models.Centroid;
 import it.unipi.hadoop.models.DataPoint;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
 
-public class KMeansCombiner extends Reducer<IntWritable, Centroid, IntWritable, Centroid> {
+public class KMeansCombiner extends Reducer<IntWritable, DataPoint, IntWritable, DataPoint> {
 
-    public void reduce(IntWritable key, Iterable<Centroid> values, Context context) throws IOException, InterruptedException {
-        Centroid cumulator = new Centroid();
+    public void reduce(IntWritable key, Iterable<DataPoint> values, Context context) throws IOException, InterruptedException {
+        DataPoint cumulator = new DataPoint();
         int numPoints = 0;
 
         while (values.iterator().hasNext()) {
@@ -18,7 +17,7 @@ public class KMeansCombiner extends Reducer<IntWritable, Centroid, IntWritable, 
             numPoints += 1;
         }
 
-        cumulator.setPointsCounter(numPoints);
+        cumulator.setWeight(numPoints);
         context.write(key, cumulator);
     }
 }

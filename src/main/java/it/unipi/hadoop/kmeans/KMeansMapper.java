@@ -1,28 +1,23 @@
 package it.unipi.hadoop.kmeans;
 
-import it.unipi.hadoop.models.Centroid;
 import it.unipi.hadoop.models.DataPoint;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.util.GenericOptionsParser;
-import org.apache.hadoop.yarn.server.nodemanager.Context;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.StringTokenizer;
 
 public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, DataPoint>
 {
 
-    private Centroid[] centroids;
+    private DataPoint[] centroids;
 
     //modify the setup to retrieve the centroids from file
     public void setup(Context context) throws IOException, InterruptedException {
         int k = Integer.parseInt(context.getConfiguration().get("k"));
-        centroids = new Centroid[k];
+        centroids = new DataPoint[k];
         Configuration conf = context.getConfiguration();
         //String parsedCentroids = conf.get("initializedCentroids");
         //System.out.println("centroids:"+parsedCentroids);
@@ -30,7 +25,7 @@ public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, DataPo
         //for (String s : parsedCentroids.split("\n")){
         for(int j=0;j<k;j++){
             String s = conf.get("centroid"+j);
-            centroids[i] = Centroid.parseString(s);
+            centroids[i] = DataPoint.parseString(s);
             i++;
         }
     }
