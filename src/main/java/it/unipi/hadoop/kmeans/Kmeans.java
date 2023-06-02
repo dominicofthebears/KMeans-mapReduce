@@ -1,6 +1,9 @@
 package it.unipi.hadoop.kmeans;
 import java.io.*;
+import java.net.URL;
 import java.util.*;
+import java.util.logging.FileHandler;
+import java.util.logging.SimpleFormatter;
 
 import it.unipi.hadoop.models.DataPoint;
 import org.apache.hadoop.conf.Configuration;
@@ -9,8 +12,13 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
+import org.apache.kerby.config.Conf;
+
+import javax.xml.crypto.Data;
 
 public class Kmeans {
 
@@ -78,7 +86,7 @@ public class Kmeans {
             //System.out.println("line"+j+": "+line);
             //System.out.println("indice"+i+": "+indexes[i]);
             if(j == indexes[i]){
-                centroids[i] = DataPoint.parseString(line);  //DOMENICO look
+                centroids[i] = new DataPoint(line);  //DOMENICO look
                 if(i==0){
                     //indexes[i+1] = random.nextInt(indexes[0], numLines-k+i);
                     indexes[i+1] = random.nextInt((numLines - k + i) - indexes[0] + 1) + indexes[0]+1;  //il +1 nella parentesi è per prendere il secondo estremo compreso, e il +1 qui fuori per prendere il primo estremo NON compreso, altrimenti può succedere di estrarre un valore uguale a quello estratto al passaggio precedente
@@ -98,7 +106,7 @@ public class Kmeans {
 
     private static DataPoint[] readCentroids(Configuration conf, String outputFile, int k) throws IOException {
         Path outputPath = new Path(outputFile);
-        FileSystem fs = outputPath.getFileSystem(conf);
+        FileSystem fs = FileSystem.get(conf);
 
         DataPoint[] newCentroids=new DataPoint[k];
 
@@ -109,39 +117,67 @@ public class Kmeans {
 
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(filePath)));
-            String line;
-            int i=0;
-            while ((line = reader.readLine()) != null) {
+
+            //int i=0;
+            //while ((line = reader.readLine()) != null) {
                 //gestire linea output
                 //each line should be a centroid
-                //String[] splitOfLine=line.split("\t");
-                //int centroidId=Integer.parseInt(line);
-                String[] coordinates=line.split(",");
-                LinkedList<Float> coordinatesCentroid=new LinkedList<>();
-                for(String coordinate :coordinates){
+            System.out.println("pathOutputfile:"+status.getPath().toString());
+            if(!status.getPath().toString().endsWith("_SUCCESS")) {
+                String line= reader.readLine();
+                System.out.println("line:" + line);
+                String[] splitOfLine = line.split("\t");
+                int centroidId = Integer.parseInt(splitOfLine[0]);
+                String[] coordinates = splitOfLine[1].split(",");
+                LinkedList<Float> coordinatesCentroid = new LinkedList<>();
+                for (String coordinate : coordinates) {
                     coordinatesCentroid.add(Float.parseFloat(coordinate));
                 }
-                DataPoint centroid=new DataPoint();
+                DataPoint centroid = new DataPoint();
                 centroid.setCoordinates(coordinatesCentroid);
-                newCentroids[i]=centroid;
-                i++;
+                newCentroids[centroidId] = centroid;
+                //i++;
+
+                //conf.set("initializedCentroids", Arrays.toString(newCentroids));
+                //System.out.println("num centroidi:"+newCentroids.length);
+
+                reader.close();
             }
-            //conf.set("initializedCentroids", Arrays.toString(newCentroids));
-            int c=0;
-            for(DataPoint centroid: newCentroids){
-                conf.set("centroid"+c,centroid.toString());
-                c++;
-            }
-            reader.close();
-            //if (fs.exists(outputPath)) { //in this way it will avoid the Output directory already exists problem, deleting each time the outputPath before rewrite to it
-                //fs.delete(outputPath, true);
-            //}
+
         }
+        int c = 0;
+        //we have to update the centroids in the conf file for the next job
+        for (DataPoint centr : newCentroids) {
+            System.out.println("centr:"+centr.toString());
+            conf.set("centroid" + c, centr.toString());
+            c++;
+        }
+
+        fs.delete(outputPath, true); //in this way it will avoid the Output directory already exists problem, deleting each time the outputPath before rewrite to it
         return newCentroids;
+    }
+
+    public static void finalize(Configuration conf, String outputFile) throws IOException {
+        Path outputPath = new Path(outputFile);
+        FileSystem fs = FileSystem.get(conf);
+
+        FSDataOutputStream fs_output=fs.create(outputPath,true);
+
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fs_output));
+
+        for(int i=0; i<Integer.parseInt(conf.get("k"));i++){
+                writer.write(conf.get("centroid"+i));
+                writer.newLine();
+        }
+        writer.close();
+        fs.close();
     }
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
+        conf.addResource(new Path("config.xml"));
+
+
 
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         int k = Integer.parseInt(otherArgs[0]);
@@ -157,6 +193,10 @@ public class Kmeans {
         }
         //String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 
+        for(int i=0;i<k;i++){
+            System.out.println("centroid"+i+":"+conf.get("centroid"+i));
+        }
+
         int stop=0;
         int i=0;
 
@@ -170,26 +210,34 @@ public class Kmeans {
             job.setReducerClass(KMeansReducer.class);
             //job.setMapOutputKeyClass(IntWritable.class);
             //job.setMapOutputValueClass(DataPoint.class);
+            job.setNumReduceTasks(k); //numero centroidi
             job.setOutputKeyClass(IntWritable.class);
             job.setOutputValueClass(DataPoint.class);
-            job.setNumReduceTasks(k); //numero centroidi
             FileInputFormat.addInputPath(job, new Path(otherArgs[1]));
             FileOutputFormat.setOutputPath(job, new Path(otherArgs[otherArgs.length - 1])); //qui salva il result del reducer?
+            job.setInputFormatClass(TextInputFormat.class);
+            job.setOutputFormatClass(TextOutputFormat.class);
             if(job.waitForCompletion(true)) {
 
 
                 DataPoint[] newCentroids = readCentroids(conf, otherArgs[otherArgs.length - 1], k);
                 if (!stopCondition(centroids,newCentroids,i,10, 30)) {
                         stop=0;
+                        //we have to insert in centroids (containing our oldCentroids) the newCentroids
+                        //that for the next cycle will be the old one
+                        for(int j=0;j<newCentroids.length;j++){
+                            centroids[j]=new DataPoint(newCentroids[j]); //using the copy constructor
+                        }
                 } else {
                     stop=1;
-                    FileOutputFormat.setOutputPath(job, new Path(otherArgs[otherArgs.length - 1]));
+                    finalize(conf,otherArgs[otherArgs.length - 1]);
                 }
             }
             else{
                     //job failure to handle
             }
             //System.exit(job.waitForCompletion(true) ? 0 : 1);
+
             i++;
         }
         System.exit(0);

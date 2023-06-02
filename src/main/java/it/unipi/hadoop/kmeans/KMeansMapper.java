@@ -8,38 +8,37 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, DataPoint>
 {
 
     private DataPoint[] centroids;
 
-    //modify the setup to retrieve the centroids from file
+
     public void setup(Context context) throws IOException, InterruptedException {
         int k = Integer.parseInt(context.getConfiguration().get("k"));
-        centroids = new DataPoint[k];
         Configuration conf = context.getConfiguration();
-        //String parsedCentroids = conf.get("initializedCentroids");
-        //System.out.println("centroids:"+parsedCentroids);
-        int i = 0;
-        //for (String s : parsedCentroids.split("\n")){
+
+        this.centroids = new DataPoint[k];
+
         for(int j=0;j<k;j++){
             String s = conf.get("centroid"+j);
-            centroids[i] = DataPoint.parseString(s);
-            i++;
+            centroids[j] = new DataPoint(s);
         }
     }
 
-    //ask if the map processes one point per time
+
     public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
             float minDistance = Float.POSITIVE_INFINITY;
             int closestLabel = 0;
+            float distance;
 
-
-            DataPoint dataPoint = DataPoint.parseString(String.valueOf(value));
+            DataPoint dataPoint = new DataPoint(value.toString());
             for (int i=0; i<centroids.length; i++){
-                if(dataPoint.squaredNorm2Distance(centroids[i])<minDistance){
-                    minDistance = (float) dataPoint.squaredNorm2Distance(centroids[i]);
+                distance = dataPoint.squaredNorm2Distance(centroids[i]);
+                if(distance<minDistance){
+                    minDistance = distance;
                     closestLabel = i;
                 }
             }
