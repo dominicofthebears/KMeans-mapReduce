@@ -19,6 +19,22 @@ public class DataPoint implements Writable {
         weight = 1;
     }
 
+    public DataPoint(DataPoint d){  //costruttore di copia
+
+        this.coordinates = new LinkedList<>();
+        this.coordinates.addAll(d.coordinates);
+        weight = d.getWeight();
+    }
+
+    public DataPoint(String s) {
+        this.coordinates = new LinkedList<>();
+        weight = 1;
+        for (String s2 : s.split(",")){
+            this.coordinates.add(Float.parseFloat(s2));
+        }
+    }
+
+
     public LinkedList<Float> getCoordinates() {
         return coordinates;
     }
@@ -34,8 +50,8 @@ public class DataPoint implements Writable {
         this.weight = weight;
     }
 
-    public double squaredNorm2Distance(DataPoint p){
-        double sum = 0.0;
+    public float squaredNorm2Distance(DataPoint p){
+        float sum = 0.0f;
         for (int i = 0; i < p.getCoordinates().size(); i++) {
             float difference = this.coordinates.get(i) - p.getCoordinates().get(i);
             sum += difference * difference;
@@ -46,27 +62,35 @@ public class DataPoint implements Writable {
 
     public static DataPoint parseString(String s){
         DataPoint d = new DataPoint();
-
         for (String s2 : s.split(",")){
             d.coordinates.add(Float.parseFloat(s2));
         }
         return d;
     }
 
+    public void parseString2(String s){
+
+        for (String value : s.split(",")) {
+            this.coordinates.add(Float.parseFloat(value));
+        }
+    }
+
     @Override
     public void write(DataOutput out) throws IOException {
+        out.writeInt(this.weight);
         for (Float coordinate : coordinates) {
             out.writeFloat(coordinate);
         }
-        out.writeInt(this.weight);
     }
 
     @Override
     public void readFields(DataInput in) throws IOException {
-        for(int i = 0; i < coordinates.size(); i++) {
-            this.coordinates.set(i, in.readFloat());
-        }
         this.weight = in.readInt();
+        coordinates = new LinkedList<>();
+        for(int i = 0; i < 3; i++) { //TODO FIXARE METTENDO LA DIMENSIONALITA DEL DATASET
+            coordinates.add(in.readFloat());
+        }
+
     }
 
     public String toString(){
@@ -82,9 +106,6 @@ public class DataPoint implements Writable {
 
 
     public DataPoint cumulatePoints(DataPoint p){
-        if(this.coordinates == null){
-            this.coordinates = new LinkedList<>(Collections.nCopies(p.getCoordinates().size(), 0.0f));;
-        }
 
         for (int i=0; i<p.getCoordinates().size(); i++){
             this.coordinates.set(i, this.coordinates.get(i) + p.coordinates.get(i));
