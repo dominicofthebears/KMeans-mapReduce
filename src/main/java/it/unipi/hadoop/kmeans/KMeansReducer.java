@@ -13,17 +13,15 @@ public class KMeansReducer extends Reducer<IntWritable, DataPoint, Text, Text> {
     public void reduce(IntWritable key, Iterable<DataPoint> values, Context context) throws IOException, InterruptedException {
 
         DataPoint finalResult = new DataPoint(values.iterator().next());
-        int totalPoints = finalResult.getWeight();
+        //int totalPoints = finalResult.getWeight();
 
         while (values.iterator().hasNext()) {
-            DataPoint c = new DataPoint(values.iterator().next());
-            totalPoints += c.getWeight();
-            finalResult.cumulatePoints(c);
+            finalResult.cumulatePoints(values.iterator().next());
         }
 
-        for (int j = 0; j < finalResult.getCoordinates().size(); j++) {
-            finalResult.getCoordinates().set(j, (finalResult.getCoordinates().get(j))/totalPoints); //
-        }
+        finalResult.getCoordinates().replaceAll(aFloat -> {
+            return (aFloat) / finalResult.getWeight(); //
+        });
 
         context.write(new Text(key.toString()), new Text(finalResult.toString()));
     }

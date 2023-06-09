@@ -11,14 +11,14 @@ public class KMeansCombiner extends Reducer<IntWritable, DataPoint, IntWritable,
 
     public void reduce(IntWritable key, Iterable<DataPoint> values, Context context) throws IOException, InterruptedException {
         DataPoint cumulator = new DataPoint(values.iterator().next());
-        int numPoints = 1;
+        //int numPoints = 1;
 
         while (values.iterator().hasNext()) {
             cumulator.cumulatePoints(values.iterator().next());
-            numPoints += 1;
+            //numPoints += 1;
         }
 
-        cumulator.setWeight(numPoints);
+        //cumulator.setWeight(numPoints);
         context.write(key, cumulator);
     }
 }

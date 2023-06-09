@@ -15,33 +15,31 @@ public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, DataPo
 
     private DataPoint[] centroids;
 
-
-    public void setup(Context context) throws IOException, InterruptedException {
+    public void setup(Context context) {
         int k = Integer.parseInt(context.getConfiguration().get("k"));
         Configuration conf = context.getConfiguration();
-
         this.centroids = new DataPoint[k];
 
-        for(int j=0;j<k;j++){
+        for(int j=0; j<k; j++){
             String s = conf.get("centroid"+j);
             centroids[j] = new DataPoint(s);
         }
     }
 
-
     public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
-            float minDistance = Float.POSITIVE_INFINITY;
+            DataPoint dataPoint = new DataPoint(value.toString());
+            float minDistance = dataPoint.squaredNorm2Distance(centroids[0]);
             int closestLabel = 0;
             float distance;
 
-            DataPoint dataPoint = new DataPoint(value.toString());
-            for (int i=0; i<centroids.length; i++){
+            for (int i=1; i<centroids.length; i++){
                 distance = dataPoint.squaredNorm2Distance(centroids[i]);
                 if(distance<minDistance){
                     minDistance = distance;
                     closestLabel = i;
                 }
             }
+
             context.write(new IntWritable(closestLabel), dataPoint);
         }
     }
