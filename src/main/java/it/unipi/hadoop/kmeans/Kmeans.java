@@ -56,7 +56,7 @@ public class Kmeans {
      *
      * @throws IOException
      */
-    public static int countLines(String filename) throws IOException {
+    private static int countLines(String filename) throws IOException {
         InputStream is = new BufferedInputStream(Files.newInputStream(Paths.get(filename))); //opening of an inputstream
         try {
             byte[] c = new byte[1024]; //allocated byte to read from the file
@@ -160,7 +160,7 @@ public class Kmeans {
      * @param conf configuration variable
      * @param outputFile file where write the last centroids
      */
-    public static void writeFinalOutput(Configuration conf, String outputFile) throws IOException {
+    private static void writeFinalOutput(Configuration conf, String outputFile) throws IOException {
         Path outputPath = new Path(outputFile);
         FileSystem fs = FileSystem.get(conf);
 
