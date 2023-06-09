@@ -13,8 +13,22 @@ public class DataPoint implements Writable {
     private int weight;
     private int numDimensions;
 
+    /**
+     * Constructor without parameters, creates an empty datapoint with weight=1
+     */
+    public DataPoint(){
+            this.coordinates=new LinkedList<>();
+            this.numDimensions=0;
+            this.weight=1;
+    }
 
-    public DataPoint(DataPoint d){  //copy constructor
+
+    /**
+     * Copy constructor
+     *
+     * @param d DataPoint to copy
+     */
+    public DataPoint(DataPoint d){
 
         this.coordinates = new LinkedList<>();
         this.numDimensions = d.getNumDimensions();
@@ -23,6 +37,11 @@ public class DataPoint implements Writable {
         numDimensions = d.getNumDimensions();
     }
 
+    /**
+     * String parsing constructor
+     *
+     * @param s string to parse
+     */
     public DataPoint(String s) {
         this.coordinates = new LinkedList<>();
         weight = 1;
@@ -49,6 +68,12 @@ public class DataPoint implements Writable {
         this.weight = weight;
     }
 
+    /**
+     * Squared norm distance calculator between this object and passed data point
+     *
+     * @param p DataPoint from which we want to calculate the distance
+     * @return the distance
+     */
     public float squaredNorm2Distance(DataPoint p){
         float sum = 0.0f;
         for (int i = 0; i < p.getCoordinates().size(); i++) {
@@ -77,6 +102,7 @@ public class DataPoint implements Writable {
 
     }
 
+
     public String toString(){
         StringBuilder dataPoint = new StringBuilder();
         for (int i = 0; i < coordinates.size(); i++) {
@@ -88,7 +114,11 @@ public class DataPoint implements Writable {
         return dataPoint.toString();
     }
 
-
+    /**
+     * Method used to cumulate DataPoints' coordinates and weights
+     *
+     * @param p the DataPoint to add to this object
+     */
     public void cumulatePoints(DataPoint p){
         for (int i=0; i<p.getCoordinates().size(); i++){
             this.coordinates.set(i, this.coordinates.get(i) + p.coordinates.get(i));

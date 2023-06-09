@@ -12,9 +12,14 @@ import java.util.Arrays;
 
 public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, DataPoint>
 {
-
     private DataPoint[] centroids;
 
+
+    /**
+     * Setup method for the mapper
+     *
+     * @param context the context
+     */
     public void setup(Context context) {
         int k = Integer.parseInt(context.getConfiguration().get("k"));
         Configuration conf = context.getConfiguration();
@@ -26,6 +31,16 @@ public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, DataPo
         }
     }
 
+    /**
+     * Map method which calculates the nearest centroid for each DataPoint in the dataset
+     *
+     * @param key ignored key
+     * @param value the row read from the input split
+     * @param context the context
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
             DataPoint dataPoint = new DataPoint(value.toString());
             float minDistance = dataPoint.squaredNorm2Distance(centroids[0]);

@@ -9,16 +9,22 @@ import java.io.IOException;
 
 public class KMeansCombiner extends Reducer<IntWritable, DataPoint, IntWritable, DataPoint> {
 
+    /**
+     * Combiner's reduce function, performing a first cumulation of coordinates and weights of the DataPoints
+     *
+     * @param key the nearest' centroid id number
+     * @param values subset of points assigned to that specific centroid
+     * @param context the context
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void reduce(IntWritable key, Iterable<DataPoint> values, Context context) throws IOException, InterruptedException {
         DataPoint cumulator = new DataPoint(values.iterator().next());
-        //int numPoints = 1;
-
         while (values.iterator().hasNext()) {
             cumulator.cumulatePoints(values.iterator().next());
-            //numPoints += 1;
         }
 
-        //cumulator.setWeight(numPoints);
         context.write(key, cumulator);
     }
 }
