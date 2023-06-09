@@ -9,12 +9,20 @@ import java.io.IOException;
 
 public class KMeansReducer extends Reducer<IntWritable, DataPoint, Text, Text> {
 
-
+    /**
+     * Reducer's reduce function, performing both the cumulation of coordinates and weights of the DataPoints belonging
+     * to the centroid having id number equal to the key, then calculating the mean of the coordinates
+     *
+     * @param key the centroid id number
+     * @param values points assigned to the centroid
+     * @param context the context
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void reduce(IntWritable key, Iterable<DataPoint> values, Context context) throws IOException, InterruptedException {
 
         DataPoint finalResult = new DataPoint(values.iterator().next());
-        //int totalPoints = finalResult.getWeight();
-
         while (values.iterator().hasNext()) {
             finalResult.cumulatePoints(values.iterator().next());
         }
