@@ -5,32 +5,31 @@ import org.apache.hadoop.io.Writable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.LinkedList;
 
 public class DataPoint implements Writable {
 
     protected LinkedList<Float> coordinates;
     private int weight;
+    private int numDimensions;
 
 
-    public DataPoint(){
-        coordinates = new LinkedList<>();
-        weight = 1;
-    }
-
-    public DataPoint(DataPoint d){  //costruttore di copia
+    public DataPoint(DataPoint d){  //copy constructor
 
         this.coordinates = new LinkedList<>();
+        this.numDimensions = d.getNumDimensions();
         this.coordinates.addAll(d.coordinates);
         weight = d.getWeight();
+        numDimensions = d.getNumDimensions();
     }
 
     public DataPoint(String s) {
         this.coordinates = new LinkedList<>();
         weight = 1;
+        numDimensions = 0;
         for (String s2 : s.split(",")){
             this.coordinates.add(Float.parseFloat(s2));
+            numDimensions += 1;
         }
     }
 
@@ -56,28 +55,12 @@ public class DataPoint implements Writable {
             float difference = this.coordinates.get(i) - p.getCoordinates().get(i);
             sum += difference * difference;
         }
-        System.out.println("sum:"+sum);
-        return sum; //not returning the square root since we are looking for the squared norm2
+        return sum;
     }
-
-    public static DataPoint parseString(String s){
-        DataPoint d = new DataPoint();
-        for (String s2 : s.split(",")){
-            d.coordinates.add(Float.parseFloat(s2));
-        }
-        return d;
-    }
-
-    public void parseString2(String s){
-
-        for (String value : s.split(",")) {
-            this.coordinates.add(Float.parseFloat(value));
-        }
-    }
-
     @Override
     public void write(DataOutput out) throws IOException {
         out.writeInt(this.weight);
+        out.writeInt(this.numDimensions);
         for (Float coordinate : coordinates) {
             out.writeFloat(coordinate);
         }
@@ -86,8 +69,9 @@ public class DataPoint implements Writable {
     @Override
     public void readFields(DataInput in) throws IOException {
         this.weight = in.readInt();
+        this.numDimensions = in.readInt();
         coordinates = new LinkedList<>();
-        for(int i = 0; i < 3; i++) { //TODO FIXARE METTENDO LA DIMENSIONALITA DEL DATASET
+        for(int i = 0; i < numDimensions; i++) {
             coordinates.add(in.readFloat());
         }
 
@@ -105,11 +89,18 @@ public class DataPoint implements Writable {
     }
 
 
-    public DataPoint cumulatePoints(DataPoint p){
-
+    public void cumulatePoints(DataPoint p){
         for (int i=0; i<p.getCoordinates().size(); i++){
             this.coordinates.set(i, this.coordinates.get(i) + p.coordinates.get(i));
         }
-        return this;
+        this.weight += p.getWeight();
+    }
+
+    public int getNumDimensions() {
+        return numDimensions;
+    }
+
+    public void setNumDimensions(int numDimensions) {
+        this.numDimensions = numDimensions;
     }
 }

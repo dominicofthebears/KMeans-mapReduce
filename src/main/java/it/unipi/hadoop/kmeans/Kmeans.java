@@ -1,9 +1,8 @@
 package it.unipi.hadoop.kmeans;
 import java.io.*;
-import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.logging.FileHandler;
-import java.util.logging.SimpleFormatter;
 
 import it.unipi.hadoop.models.DataPoint;
 import org.apache.hadoop.conf.Configuration;
@@ -16,26 +15,21 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
-import org.apache.kerby.config.Conf;
-
-import javax.xml.crypto.Data;
 
 public class Kmeans {
 
     private static DataPoint[] centroids;
 
-    //ask for the stopping condition
+
     private static boolean stopCondition(DataPoint[] oldCentroids, DataPoint[] newCentroids, int nIterations, int maxIterations, float threshold){
         System.out.println("start stopCondition function");
         float totDistance=0;
+
         for(int i=0; i<newCentroids.length; i++){
             totDistance += newCentroids[i].squaredNorm2Distance(oldCentroids[i]);
         }
-        if(totDistance<=threshold) { //if the total distance is lower than the threshold the algorithm can end
-            System.out.println("end stopCondition function");
-            return true;
-        }
-        else if(nIterations>=maxIterations) { // if the distance is higher than the threshold the algorithm stops anyway if it runs for at least maxIterations iterations
+
+        if(totDistance<=threshold || nIterations>=maxIterations) { //if the total distance is lower than the threshold the algorithm can end
             System.out.println("end stopCondition function");
             return true;
         }
@@ -46,7 +40,7 @@ public class Kmeans {
     }
 
     public static int countLines(String filename) throws IOException {
-        InputStream is = new BufferedInputStream(new FileInputStream(filename));
+        InputStream is = new BufferedInputStream(Files.newInputStream(Paths.get(filename)));
         try {
             byte[] c = new byte[1024];
             int count = 0;
@@ -79,24 +73,12 @@ public class Kmeans {
 
         centroids= new DataPoint[k]; //initialize centroid vector
 
-        //System.out.println("indice:"+indexes[0]);
-
-        while(i<k && j<1000){
+        while(i<k){
             line = reader.readLine();
-            //System.out.println("line"+j+": "+line);
-            //System.out.println("indice"+i+": "+indexes[i]);
             if(j == indexes[i]){
-                centroids[i] = new DataPoint(line);  //DOMENICO look
-                if(i==0){
-                    //indexes[i+1] = random.nextInt(indexes[0], numLines-k+i);
-                    indexes[i+1] = random.nextInt((numLines - k + i) - indexes[0] + 1) + indexes[0]+1;  //il +1 nella parentesi è per prendere il secondo estremo compreso, e il +1 qui fuori per prendere il primo estremo NON compreso, altrimenti può succedere di estrarre un valore uguale a quello estratto al passaggio precedente
-
-                }
-                else{
-                    //indexes[i+1] = random.nextInt(indexes[i-1], numLines-k+i);
-                    if(i<k-1) { //se k=20, i=19 abbiamo assegnato tutti e 20 i posti dell-array indexes, qui entriamo e prende indexes[20] che è OutOfBounds
-                        indexes[i + 1] = random.nextInt((numLines - k + i) - indexes[i] + 1) + indexes[i] + 1;
-                    }
+                centroids[i] = new DataPoint(line);
+                if(i<k-1) { //se k=20, i=19 abbiamo assegnato tutti e 20 i posti dell-array indexes, qui entriamo e prende indexes[20] che è OutOfBounds
+                    indexes[i + 1] = random.nextInt((numLines - k + i) - indexes[i] + 1) + indexes[i] + 1;
                 }
                 i++;
             }
@@ -128,22 +110,11 @@ public class Kmeans {
                 System.out.println("line:" + line);
                 String[] splitOfLine = line.split("\t");
                 int centroidId = Integer.parseInt(splitOfLine[0]);
-                String[] coordinates = splitOfLine[1].split(",");
-                LinkedList<Float> coordinatesCentroid = new LinkedList<>();
-                for (String coordinate : coordinates) {
-                    coordinatesCentroid.add(Float.parseFloat(coordinate));
-                }
-                DataPoint centroid = new DataPoint();
-                centroid.setCoordinates(coordinatesCentroid);
-                newCentroids[centroidId] = centroid;
-                //i++;
-
-                //conf.set("initializedCentroids", Arrays.toString(newCentroids));
-                //System.out.println("num centroidi:"+newCentroids.length);
+                String coordinates = splitOfLine[1];
+                newCentroids[centroidId] = new DataPoint(coordinates);
 
                 reader.close();
             }
-
         }
         int c = 0;
         //we have to update the centroids in the conf file for the next job
@@ -152,12 +123,11 @@ public class Kmeans {
             conf.set("centroid" + c, centr.toString());
             c++;
         }
-
         fs.delete(outputPath, true); //in this way it will avoid the Output directory already exists problem, deleting each time the outputPath before rewrite to it
         return newCentroids;
     }
 
-    public static void finalize(Configuration conf, String outputFile) throws IOException {
+    public static void writeFinalOutput(Configuration conf, String outputFile) throws IOException {
         Path outputPath = new Path(outputFile);
         FileSystem fs = FileSystem.get(conf);
 
@@ -178,13 +148,15 @@ public class Kmeans {
         conf.addResource(new Path("config.xml"));
 
 
-
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         int k = Integer.parseInt(otherArgs[0]);
         conf.set("k", String.valueOf(k));
 
         Path path_dataset= new Path("../"+otherArgs[1]);
         Kmeans.initializeCentroids(k,path_dataset);
+
+        int maxIteration = Integer.parseInt(otherArgs[2]);
+        float threshold = Float.parseFloat(otherArgs[3]);
 
         int c=0;
         for(DataPoint centroid: centroids){
@@ -197,10 +169,10 @@ public class Kmeans {
             System.out.println("centroid"+i+":"+conf.get("centroid"+i));
         }
 
-        int stop=0;
+        boolean stop = false;
         int i=0;
 
-        while(stop==0) {
+        while(!stop) {
             System.out.println("cycle number:"+i);
 
             Job job = Job.getInstance(conf, "KMeans");
@@ -219,22 +191,24 @@ public class Kmeans {
             job.setOutputFormatClass(TextOutputFormat.class);
             if(job.waitForCompletion(true)) {
 
+                System.out.println("Entro nella condizione di stop dopo aver effettuato la prima iterazione");
 
                 DataPoint[] newCentroids = readCentroids(conf, otherArgs[otherArgs.length - 1], k);
-                if (!stopCondition(centroids,newCentroids,i,10, 30)) {
-                        stop=0;
+                stop = stopCondition(centroids,newCentroids,i,maxIteration, threshold);
+                if (!stop) { //leggere maxIterations e threshold da parametri
                         //we have to insert in centroids (containing our oldCentroids) the newCentroids
                         //that for the next cycle will be the old one
-                        for(int j=0;j<newCentroids.length;j++){
+                        for(int j=0; j<newCentroids.length; j++){
                             centroids[j]=new DataPoint(newCentroids[j]); //using the copy constructor
                         }
                 } else {
-                    stop=1;
-                    finalize(conf,otherArgs[otherArgs.length - 1]);
+                    writeFinalOutput(conf,otherArgs[otherArgs.length - 1]);
                 }
             }
             else{
                     //job failure to handle
+                    System.err.println("Job "+i+"-th failed");
+                    System.exit(1);  //exit after error occured
             }
             //System.exit(job.waitForCompletion(true) ? 0 : 1);
 
