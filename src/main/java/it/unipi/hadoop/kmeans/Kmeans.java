@@ -223,7 +223,7 @@ public class Kmeans {
 
             if(job.waitForCompletion(true)) {
                 DataPoint[] newCentroids = readCentroids(conf, otherArgs[otherArgs.length - 1], k);
-                stop = stopCondition(centroids,newCentroids,i,maxIteration, threshold);
+                stop = stopCondition(centroids,newCentroids,i+1,maxIteration, threshold); //i starts from 0
                 if (!stop) {
                         for(int j=0; j<newCentroids.length; j++){
                             centroids[j]=new DataPoint(newCentroids[j]);}
