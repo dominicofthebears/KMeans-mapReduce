@@ -38,6 +38,7 @@ public class Kmeans {
         for(int i=0; i<newCentroids.length; i++){ //cumulates the distances between old and new centroids
             totDistance += newCentroids[i].squaredNorm2Distance(oldCentroids[i]);
         }
+        //System.out.println("totDistance:"+totDistance);
 
         if(totDistance<=threshold || nIterations>=maxIterations) { //if the total distance is lower than the threshold the algorithm can end
             return true;
@@ -188,7 +189,7 @@ public class Kmeans {
         int k = Integer.parseInt(otherArgs[0]);
         conf.set("k", String.valueOf(k));
 
-        Path path_dataset= new Path("../"+otherArgs[1]);
+        Path path_dataset= new Path("../datasets/"+otherArgs[1]);
         Kmeans.initializeCentroids(k,path_dataset);
 
         int maxIteration = Integer.parseInt(otherArgs[2]);
@@ -200,8 +201,13 @@ public class Kmeans {
                 c++;
         }
 
+        //for(int j=0;j<k;j++){
+          //  System.out.println("centroid"+j+":"+conf.get("centroid"+j));
+        //}
+
 
         while(!stop) {
+            //System.out.println("job number "+(i+1));
             Job job = Job.getInstance(conf, "KMeans");
             job.setJarByClass(Kmeans.class);
             job.setMapperClass(KMeansMapper.class);
