@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import it.unipi.hadoop.models.DataPoint;
+import it.unipi.hadoop.models.EmptyCentroidException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.fs.Path;
@@ -84,7 +85,7 @@ public class Kmeans {
      * @param k is the number of centroids
      * @param inputFile is the file containing the starting dataset
      */
-    private static void initializeCentroids(int k, Path inputFile) throws IOException {
+    private static void initializeCentroids(int k, Path inputFile, Configuration conf) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(inputFile)));
         Random random = new Random();
         int numLines = countLines(String.valueOf(inputFile));
@@ -110,25 +111,37 @@ public class Kmeans {
             }
             j++;
         }
+        int c=0;
+        for(DataPoint centroid: centroids){
+            conf.set("centroid"+c,centroid.toString());
+            c++;
+        }
     }
 
     /**
      * Read the centroids from the latest iteration, with the objective to compare these centroids with the older ones
      *
-     * @param conf  the configuration variable
+     * @param conf       the configuration variable
      * @param outputFile the output file of the latest iteration, in which the job prints the centroids
-     * @param k the centroids number
+     * @param k          the centroids number
+     * @param iteration  number of iteration
      *
+     * @throws EmptyCentroidException in case we find an empty centroid
      * @return the set of centroids read on the outputFile
      */
-    private static DataPoint[] readCentroids(Configuration conf, String outputFile, int k) throws IOException {
-        Path outputPath = new Path(outputFile);
+    private static DataPoint[] readCentroids(Configuration conf, String outputFile, int k, int iteration) throws EmptyCentroidException, IOException {
+        Path outputPath = new Path(outputFile+"/iter"); //take reducer's output
         FileSystem fs = FileSystem.get(conf);
 
         DataPoint[] newCentroids=new DataPoint[k];
 
         // read centroids from job's output file
         FileStatus[] fileStatuses = fs.listStatus(outputPath);
+
+        if(fileStatuses.length != k+1){ //k+1 since we also have the "SUCCESS" file
+            throw new EmptyCentroidException();
+        }
+
         for (FileStatus status : fileStatuses) {
             Path filePath = status.getPath();
 
@@ -144,15 +157,18 @@ public class Kmeans {
                 reader.close();
             }
         }
-        int c = 0;
-        //we have to update the centroids in the conf file for the next job
-        for (DataPoint centr : newCentroids) {
-            conf.set("centroid" + c, centr.toString());
-            c++;
-        }
-        //delete job's file output after reading it
-        fs.delete(outputPath, true);
-        return newCentroids;
+
+            int c = 0;
+            //we have to update the centroids in the conf file for the next job
+            for (DataPoint centr : newCentroids) {
+                conf.set("centroid" + c, centr.toString());
+                c++;
+            }
+            //delete job's file output after reading it
+            fs.delete(outputPath, true); //where the reducer goes to write
+            //save output on a file
+            writeFinalOutput(conf, outputFile + "/centroids_" + iteration + "_iteration.txt");
+            return newCentroids;
     }
 
     /**
@@ -178,7 +194,7 @@ public class Kmeans {
     }
 
     public static void main(String[] args) throws Exception {
-        int c=0;
+
         boolean stop = false;
         int i=0;
 
@@ -190,24 +206,17 @@ public class Kmeans {
         conf.set("k", String.valueOf(k));
 
         Path path_dataset= new Path("../datasets/"+otherArgs[1]);
-        Kmeans.initializeCentroids(k,path_dataset);
+        Kmeans.initializeCentroids(k,path_dataset,conf);
 
         int maxIteration = Integer.parseInt(otherArgs[2]);
         float threshold = Float.parseFloat(otherArgs[3]);
 
 
-        for(DataPoint centroid: centroids){
-                conf.set("centroid"+c,centroid.toString());
-                c++;
-        }
-
-        //for(int j=0;j<k;j++){
-          //  System.out.println("centroid"+j+":"+conf.get("centroid"+j));
-        //}
+        final String OUTPUT= otherArgs[otherArgs.length - 1]+"/iter";
 
 
         while(!stop) {
-            //System.out.println("job number "+(i+1));
+            System.out.println("job number "+(i+1));
             Job job = Job.getInstance(conf, "KMeans");
             job.setJarByClass(Kmeans.class);
             job.setMapperClass(KMeansMapper.class);
@@ -217,19 +226,29 @@ public class Kmeans {
             job.setOutputKeyClass(IntWritable.class);
             job.setOutputValueClass(DataPoint.class);
             FileInputFormat.addInputPath(job, new Path(otherArgs[1]));
-            FileOutputFormat.setOutputPath(job, new Path(otherArgs[otherArgs.length - 1]));
+            FileOutputFormat.setOutputPath(job, new Path(OUTPUT));
             job.setInputFormatClass(TextInputFormat.class);
             job.setOutputFormatClass(TextOutputFormat.class);
 
             if(job.waitForCompletion(true)) {
-                DataPoint[] newCentroids = readCentroids(conf, otherArgs[otherArgs.length - 1], k);
-                stop = stopCondition(centroids,newCentroids,i+1,maxIteration, threshold); //i starts from 0
-                if (!stop) {
-                        for(int j=0; j<newCentroids.length; j++){
-                            centroids[j]=new DataPoint(newCentroids[j]);}
-                }
-                else {
-                    writeFinalOutput(conf,otherArgs[otherArgs.length - 1]);
+                try{
+                    DataPoint[] newCentroids = readCentroids(conf, otherArgs[otherArgs.length - 1], k,i+1);
+
+                    stop = stopCondition(centroids,newCentroids,i+1,maxIteration, threshold); //i starts from 0
+                    if (!stop) {
+                            for(int j=0; j<newCentroids.length; j++){
+                                centroids[j]=new DataPoint(newCentroids[j]);}
+                    }
+                    else {
+                        writeFinalOutput(conf,otherArgs[otherArgs.length - 1]+"/centroids_final.txt");
+                    }
+                }catch (NullPointerException e){
+                    FileSystem fs = FileSystem.get(conf);
+                    Path outputPath = new Path(otherArgs[otherArgs.length - 1]);
+                    fs.delete(outputPath, true);
+                    Kmeans.initializeCentroids(k,path_dataset,conf);
+                    i = 0;
+                    break;
                 }
             }
 
