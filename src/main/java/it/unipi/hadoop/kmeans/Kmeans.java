@@ -242,7 +242,7 @@ public class Kmeans {
                     else {
                         writeFinalOutput(conf,otherArgs[otherArgs.length - 1]+"/centroids_final.txt");
                     }
-                }catch (NullPointerException e){
+                }catch (EmptyCentroidException e){
                     FileSystem fs = FileSystem.get(conf);
                     Path outputPath = new Path(otherArgs[otherArgs.length - 1]);
                     fs.delete(outputPath, true);
